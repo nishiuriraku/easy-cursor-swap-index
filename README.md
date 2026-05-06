@@ -1,0 +1,58 @@
+# EasyCursorSwap — Official Theme Index
+
+[EasyCursorSwap](https://github.com/nishiuriraku/easy-cursor-swap) の公式テーマ
+インデックスとオーサー鍵レジストリです。アプリ内の **公式インデックス** タブから
+ここに登録された `.cursorpack` を検索・ダウンロードできます。
+
+## ディレクトリ構成
+
+```
+.
+├── authors/                 公開鍵レジストリ (1 著者 = 1 ファイル)
+│   └── <github>.json        { github, display_name, public_key, historical_keys? }
+├── entries/                 テーマメタデータ (1 テーマ = 1 ファイル)
+│   └── <uuid>.json          { id, name, author_github, sha256, signature, ... }
+├── themes/                  実体 .cursorpack (uuid.cursorpack)
+├── schemas/                 JSON Schema (entry / author)
+├── scripts/marketplace/     検証スクリプト (validate.mjs + malware-hashes.txt)
+└── .github/workflows/       PR 自動検証 (Schema + SHA-256 + Ed25519 + VirusTotal)
+```
+
+## テーマを提出する
+
+1. アプリ内 **設定 → Security & Keys** で鍵ペアを生成 (初回のみ)
+2. ライブラリで対象テーマを選び **「公式インデックスに提出」**
+3. アプリが GitHub の Web エディタを開きます。指示に従って:
+   - `authors/<your-github>.json` (初回のみ) を作成
+   - `entries/<uuid>.json` を作成
+   - `themes/<uuid>.cursorpack` をアップロード
+4. PR を作成すると自動検証 (CI) が走ります
+5. レビュアー目視 → マージで公開
+
+詳細手順は [新規著者公開鍵の登録ガイド](https://github.com/nishiuriraku/easy-cursor-swap/blob/main/docs/author_registration.md) を参照してください。
+
+## 自動検証 (PR CI)
+
+以下を `marketplace-validate` ワークフローが PR ごとに実行します:
+
+- ✅ JSON スキーマ検証 (`schemas/index-entry.json` / `schemas/author.json`)
+- ✅ ファイルサイズ閾値 (`themes/*.cursorpack` ≤ 50 MB)
+- ✅ SHA-256 整合性 (entry.sha256 == sha256(pack))
+- ✅ Ed25519 署名検証 (entry.signature を著者公開鍵で検証)
+- ✅ key_id 一致確認 (現行鍵 / `historical_keys` どちらか一致すれば OK)
+- ✅ VirusTotal ハッシュ照合 (`secrets.VIRUSTOTAL_API_KEY` 設定時)
+- ✅ ローカル `malware-hashes.txt` 照合 (フォールバック)
+
+## ライセンス
+
+メタデータと検証スクリプトは [MIT License](./LICENSE) です。
+**個別の `.cursorpack` の利用条件は各テーマ作者に従ってください**
+(著者ごとに `authors/<github>.json` の `display_name` と PR 内の記載を参照)。
+
+## クラッシュレポート受付
+
+EasyCursorSwap のクラッシュレポート (オプトイン) は本リポジトリの
+Issues に転送されます。Cloudflare Worker (
+[crash-report-worker](https://github.com/nishiuriraku/easy-cursor-swap/tree/main/services/crash-report-worker)
+) が匿名 POST を受けて Issue 作成を行う仕組みで、ユーザーの個人情報は
+クライアント側で `redact_path` 済みです。
