@@ -1,5 +1,6 @@
 {
-  "version": 1,
-  "generated_at": null,
+  "schema_version": 1,
+  "commit": "3af4c885b59ee5616f857b9c32efb3936863e724",
+  "generated_at": "2026-05-08T09:23:52.552Z",
   "entries": []
 }

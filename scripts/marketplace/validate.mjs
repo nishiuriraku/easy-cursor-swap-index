@@ -1,30 +1,34 @@
 #!/usr/bin/env node
 /**
- * Marketplace 投稿検証スクリプト
+ * Marketplace 投稿検証スクリプト (Ajv 版)
  *
  * 本リポジトリ (easy-cursor-swap-index) への PR で動かす想定。
  * 環境変数 `CHANGED_FILES` (改行区切り) に変更ファイル一覧が入っていれば
  * その中の `entries/*.json` を検証対象とする。なければ `entries/*.json` を全走査。
  *
  * 検証ステップ:
- *  1. JSON スキーマ検証 (構造 + 必須フィールド + 型)
- *  2. ファイルサイズ閾値 (`themes/<id>.cursorpack` <= 50MB)
- *  3. SHA-256 整合性 (entry.sha256 == sha256(themes/<id>.cursorpack))
- *  4. Ed25519 署名検証 (`authors/{author_github}.json` の公開鍵)
- *  5. マルウェアチェック:
- *       VIRUSTOTAL_API_KEY が設定されていれば VirusTotal API v3 で照合
- *       未設定の場合は `malware-hashes.txt` ローカル DB にフォールバック
+ *  1. JSON Schema 検証 (schemas/index-entry.json + Ajv format: uri / date-time)
+ *  2. パス整合性 (entry.id == basename, themes/<id>.cursorpack 存在, 著者ファイル名一致)
+ *  3. ファイルサイズ閾値 (`themes/<id>.cursorpack` <= 50MB)
+ *  4. SHA-256 整合性 (entry.sha256 == sha256(themes/<id>.cursorpack))
+ *  5. 著者レコード Schema 検証 + Ed25519 公開鍵長 32 バイト
+ *  6. Ed25519 署名検証 (current key or historical_keys のいずれか)
+ *  7. マルウェアチェック (VirusTotal API / ローカル DB)
+ *  8. 孤立検出: themes/*.cursorpack に対応する entries/*.json が無い場合は error
  */
 import { readFileSync, statSync, existsSync, readdirSync } from 'node:fs'
 import { createHash, createPublicKey, verify } from 'node:crypto'
 import { dirname, join, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import Ajv from 'ajv/dist/2020.js'
+import addFormats from 'ajv-formats'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..', '..')
 const ENTRIES_DIR = join(ROOT, 'entries')
 const THEMES_DIR = join(ROOT, 'themes')
 const AUTHORS_DIR = join(ROOT, 'authors')
+const SCHEMAS_DIR = join(ROOT, 'schemas')
 const MALWARE_DB = join(__dirname, 'malware-hashes.txt')
 
 const MAX_PACK_BYTES = 50 * 1024 * 1024
@@ -32,12 +36,22 @@ const MAX_PACK_BYTES = 50 * 1024 * 1024
 // VirusTotal free tier: 4 req/min → 15s 間隔で安全側に倒す
 const VT_RATE_LIMIT_MS = 15_000
 
+const ajv = new Ajv({ allErrors: true, strict: false })
+addFormats(ajv)
+
+const validateEntrySchema = ajv.compile(loadJson(join(SCHEMAS_DIR, 'index-entry.json')))
+const validateAuthorSchema = ajv.compile(loadJson(join(SCHEMAS_DIR, 'author.json')))
+
 function logErr(msg) {
   console.error(`::error::${msg}`)
 }
 
 function logWarn(msg) {
   console.warn(`::warning::${msg}`)
+}
+
+function loadJson(path) {
+  return JSON.parse(readFileSync(path, 'utf-8'))
 }
 
 function listEntriesFromEnv() {
@@ -54,36 +68,23 @@ function listEntriesFromEnv() {
     .map((f) => join(ENTRIES_DIR, f))
 }
 
-function loadJson(path) {
-  return JSON.parse(readFileSync(path, 'utf-8'))
+function listThemes() {
+  if (!existsSync(THEMES_DIR)) return []
+  return readdirSync(THEMES_DIR).filter((f) => f.endsWith('.cursorpack'))
 }
 
-function isUuid(s) {
-  return typeof s === 'string'
-    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+function formatAjvErrors(errors) {
+  return (errors ?? []).map((e) => `${e.instancePath || '/'} ${e.message}`).join('; ')
 }
 
-function validateSchema(entry) {
-  const err = []
-  const required = [
-    'id', 'name', 'author', 'author_github', 'author_pubkey_id',
-    'sha256', 'signature', 'download_url', 'version', 'included_roles',
-  ]
-  for (const f of required) {
-    if (!(f in entry)) err.push(`missing field: ${f}`)
+/** entries/<uuid>.json のファイル名と entry.id が一致するか */
+function checkEntryFilename(file, entry) {
+  const expected = `${entry.id}.json`
+  const actual = basename(file)
+  if (expected !== actual) {
+    return `ファイル名 ${actual} は entry.id (${entry.id}.json) と一致しません`
   }
-  if (entry.id && !isUuid(entry.id)) err.push(`invalid uuid: ${entry.id}`)
-  if (entry.sha256 && !/^[0-9a-f]{64}$/i.test(entry.sha256)) {
-    err.push(`invalid sha256: ${entry.sha256}`)
-  }
-  if (entry.included_roles && !Array.isArray(entry.included_roles)) {
-    err.push('included_roles must be array')
-  }
-  if (entry.included_roles && Array.isArray(entry.included_roles)
-      && !entry.included_roles.includes('Arrow')) {
-    err.push('Arrow ロールは必須です')
-  }
-  return err
+  return null
 }
 
 function loadAuthor(github) {
@@ -91,11 +92,21 @@ function loadAuthor(github) {
   if (!existsSync(path)) {
     return { ok: false, error: `authors/${github}.json が存在しません` }
   }
+  let record
   try {
-    return { ok: true, record: loadJson(path) }
+    record = loadJson(path)
   } catch (e) {
     return { ok: false, error: `authors/${github}.json パース失敗: ${e.message}` }
   }
+  // Schema 検証
+  if (!validateAuthorSchema(record)) {
+    return { ok: false, error: `authors/${github}.json schema 違反: ${formatAjvErrors(validateAuthorSchema.errors)}` }
+  }
+  // ファイル名と record.github の一致 (CI は Linux で大文字小文字を区別する)
+  if (record.github !== github) {
+    return { ok: false, error: `authors/${github}.json の github フィールド (${record.github}) はファイル名と一致する必要があります` }
+  }
+  return { ok: true, record }
 }
 
 function computeKeyId(pubkeyB64) {
@@ -128,7 +139,12 @@ function verifySignature(entry, authorRecord) {
     return { ok: false, error: `key_id ${entry.author_pubkey_id} が著者鍵と一致しません` }
   }
 
-  const pubkey = pubkeyFromB64(pubkeyB64)
+  let pubkey
+  try {
+    pubkey = pubkeyFromB64(pubkeyB64)
+  } catch (e) {
+    return { ok: false, error: e.message }
+  }
   const sigBytes = Buffer.from(entry.signature, 'base64')
   if (sigBytes.length !== 64) {
     return { ok: false, error: `署名長が不正: ${sigBytes.length} bytes` }
@@ -148,11 +164,27 @@ function checkPackFile(entry) {
   if (stat.size > MAX_PACK_BYTES) {
     return { ok: false, error: `${path} のサイズ ${stat.size} が 50MB を超えています` }
   }
+  // entry.size_bytes が指定されていれば実体と一致するか確認
+  if (typeof entry.size_bytes === 'number' && entry.size_bytes !== stat.size) {
+    return { ok: false, error: `entry.size_bytes (${entry.size_bytes}) が実ファイル (${stat.size}) と一致しません` }
+  }
   const sha = createHash('sha256').update(readFileSync(path)).digest('hex')
   if (sha.toLowerCase() !== entry.sha256.toLowerCase()) {
     return { ok: false, error: `SHA-256 不一致 expected=${entry.sha256} actual=${sha}` }
   }
   return { ok: true, sha, size: stat.size }
+}
+
+/** themes/*.cursorpack に対応する entries/<id>.json が存在しないものを検出 */
+function detectOrphanThemes() {
+  const orphans = []
+  for (const file of listThemes()) {
+    const id = file.replace(/\.cursorpack$/, '')
+    if (!existsSync(join(ENTRIES_DIR, `${id}.json`))) {
+      orphans.push(file)
+    }
+  }
+  return orphans
 }
 
 /** VirusTotal API v3 でハッシュを照合する。
@@ -192,7 +224,7 @@ async function checkMalwareVirusTotal(sha, apiKey) {
   let body
   try {
     body = await res.json()
-  } catch (e) {
+  } catch {
     logWarn('VirusTotal: レスポンスパース失敗。ローカル DB のみで継続。')
     return { ok: true, warning: 'parse_error' }
   }
@@ -250,13 +282,19 @@ async function main() {
     console.log('VirusTotal API: 未設定 — ローカル malware-hashes.txt のみで照合')
   }
 
+  // 孤立した themes/*.cursorpack を検出 (PR で削除し忘れた残骸)
+  const orphans = detectOrphanThemes()
+  for (const o of orphans) {
+    logErr(`themes/${o} に対応する entries/*.json が存在しません (孤立ファイル)`)
+  }
+
   const targets = listEntriesFromEnv()
-  if (targets.length === 0) {
+  if (targets.length === 0 && orphans.length === 0) {
     console.log('no entries to validate')
     return 0
   }
 
-  let errors = 0
+  let errors = orphans.length
   let vtCallIndex = 0
   for (const file of targets) {
     console.log(`\n--- ${basename(file)} ---`)
@@ -269,13 +307,22 @@ async function main() {
       continue
     }
 
-    const schemaErrors = validateSchema(entry)
-    for (const e of schemaErrors) logErr(`${file}: ${e}`)
-    if (schemaErrors.length > 0) {
-      errors += schemaErrors.length
+    // 1. Schema 検証 (Ajv)
+    if (!validateEntrySchema(entry)) {
+      logErr(`${file}: schema 違反: ${formatAjvErrors(validateEntrySchema.errors)}`)
+      errors++
       continue
     }
 
+    // 2. ファイル名整合性
+    const filenameErr = checkEntryFilename(file, entry)
+    if (filenameErr) {
+      logErr(`${file}: ${filenameErr}`)
+      errors++
+      continue
+    }
+
+    // 3. 著者レコード読み込み + Schema 検証
     const author = loadAuthor(entry.author_github)
     if (!author.ok) {
       logErr(`${file}: ${author.error}`)
@@ -283,6 +330,7 @@ async function main() {
       continue
     }
 
+    // 4. 署名検証
     const sigResult = verifySignature(entry, author.record)
     if (!sigResult.ok) {
       logErr(`${file}: ${sigResult.error}`)
@@ -290,6 +338,7 @@ async function main() {
       continue
     }
 
+    // 5. .cursorpack 存在 + サイズ + SHA-256
     const pack = checkPackFile(entry)
     if (!pack.ok) {
       logErr(`${file}: ${pack.error}`)
@@ -297,6 +346,7 @@ async function main() {
       continue
     }
 
+    // 6. マルウェアチェック
     const malware = await checkMalware(pack.sha, vtApiKey, vtCallIndex === 0)
     vtCallIndex++
     if (!malware.ok) {
@@ -306,7 +356,8 @@ async function main() {
     }
 
     const vtLabel = vtApiKey ? ' [VT✓]' : ''
-    console.log(`  OK: ${entry.name} (${entry.version}) ${pack.size}B sha=${pack.sha.slice(0, 12)}...${vtLabel}`)
+    const nameLabel = typeof entry.name === 'string' ? entry.name : (entry.name?.en ?? entry.name?.ja ?? '?')
+    console.log(`  OK: ${nameLabel} (${entry.version}) ${pack.size}B sha=${pack.sha.slice(0, 12)}...${vtLabel}`)
   }
 
   if (errors > 0) {

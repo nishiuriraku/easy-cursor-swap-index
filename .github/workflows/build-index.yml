@@ -1,0 +1,59 @@
+name: Rebuild index.json
+
+# main への push 時に entries/*.json を集約して index.json を再生成する。
+# クライアント (cursor-forge marketplace.rs) は raw.githubusercontent.com の
+# index.json 1 ファイルだけを取得するため、entry の追加・削除と index.json を
+# 必ず同期させる必要がある。
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'entries/**'
+      - 'authors/**'
+      - 'schemas/**'
+      - 'scripts/marketplace/build-index.mjs'
+
+# 同時実行を抑止 (古い run が新しい index.json を上書きしないように)
+concurrency:
+  group: build-index-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Regenerate index.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # commit-back するためにフルクローン + 書き込み権限つきトークン
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild index.json
+        run: npm run build-index
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
+      - name: Commit & push if changed
+        run: |
+          if git diff --quiet -- index.json; then
+            echo "index.json unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.json
+          git commit -m "chore: rebuild index.json (${GITHUB_SHA::7})"
+          git push

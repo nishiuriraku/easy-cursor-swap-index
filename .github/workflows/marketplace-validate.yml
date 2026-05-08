@@ -1,11 +1,13 @@
 name: Marketplace Theme Validate
 
 # entries / themes / authors への PR を自動検証する。
-#  1. JSON スキーマ + 必須フィールド
+#  1. JSON Schema (Ajv 2020-12) + 必須フィールド
 #  2. SHA-256 整合性 (entry.sha256 == sha256(themes/<id>.cursorpack))
 #  3. Ed25519 署名検証
 #  4. サイズ閾値 (50 MB)
-#  5. マルウェアチェック: VIRUSTOTAL_API_KEY が設定されていれば VT API v3、
+#  5. ファイル名 / UUID / 著者ファイル整合性
+#  6. 孤立した themes/*.cursorpack の検出
+#  7. マルウェアチェック: VIRUSTOTAL_API_KEY が設定されていれば VT API v3、
 #     未設定時は scripts/marketplace/malware-hashes.txt にフォールバック
 
 on:
@@ -14,12 +16,19 @@ on:
       - 'entries/**'
       - 'themes/**'
       - 'authors/**'
+      - 'schemas/**'
+      - 'scripts/marketplace/**'
+      - 'package.json'
+      - 'package-lock.json'
 
 jobs:
   validate:
     name: Validate marketplace submission
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,20 +37,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Detect changed entries
         id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          BASE="${{ github.event.pull_request.base.sha }}"
-          HEAD="${{ github.event.pull_request.head.sha }}"
           {
             echo "list<<EOF"
-            git diff --name-only "$BASE" "$HEAD" -- entries/ themes/ authors/
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- entries/ themes/ authors/
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Schema + SHA-256 + signature + malware validation
-        run: node scripts/marketplace/validate.mjs
+        run: npm run validate
         env:
           CHANGED_FILES: ${{ steps.changes.outputs.list }}
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}

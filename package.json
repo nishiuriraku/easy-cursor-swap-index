@@ -1,0 +1,18 @@
+{
+  "name": "easy-cursor-swap-index",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Official theme index and author registry for EasyCursorSwap. Hosts JSON Schema, validation scripts, and CI workflows.",
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/marketplace/validate.mjs",
+    "build-index": "node scripts/marketplace/build-index.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
