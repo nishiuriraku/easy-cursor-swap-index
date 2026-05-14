@@ -13,10 +13,22 @@
 ├── entries/                 テーマメタデータ (1 テーマ = 1 ファイル)
 │   └── <uuid>.json          { id, name, author_github, sha256, signature, ... }
 ├── themes/                  実体 .cursorpack (uuid.cursorpack)
+├── previews/                カーソルロール別プレビュー PNG (validate.mjs が自動生成)
+│   └── <uuid>/
+│       ├── Arrow.png        各ロールの 64×64 PNG プレビュー (Arrow は必須)
+│       ├── Help.png
+│       ├── AppStarting.png
+│       ├── Wait.png
+│       ├── Crosshair.png
+│       └── IBeam.png
 ├── schemas/                 JSON Schema (entry / author)
 ├── scripts/marketplace/     検証スクリプト (validate.mjs + malware-hashes.txt)
 └── .github/workflows/       PR 自動検証 (Schema + SHA-256 + Ed25519 + VirusTotal)
 ```
+
+`previews/` 以下のファイルは `scripts/marketplace/validate.mjs` が `.cursorpack` から
+自動展開します。各エントリの `index.json` には `preview_base_url` フィールドが付与され、
+アプリはそこを起点に `<preview_base_url>/Arrow.png` などを取得してサムネイルを表示します。
 
 ## テーマを提出する
 
