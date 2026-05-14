@@ -108,6 +108,11 @@
       "minimum": 0
     },
     "verified": { "type": "boolean" },
-    "published_at": { "type": "string", "format": "date-time" }
+    "published_at": { "type": "string", "format": "date-time" },
+    "preview_base_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "プレビュー PNG のベース URL。previews/<uuid>/<Role>.png の形式で取得できる。build-index.mjs が自動導出。"
+    }
   }
 }

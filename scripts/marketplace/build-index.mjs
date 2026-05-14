@@ -100,6 +100,15 @@ function normalizeEntry(entry) {
   if (entry.highlight) out.highlight = entry.highlight
   if (entry.verified != null) out.verified = entry.verified
   if (entry.published_at) out.published_at = entry.published_at
+  // preview_base_url: previews/<uuid>/Arrow.png が存在すれば自動導出する
+  const uuidMatch = entry.download_url?.match(/\/themes\/([a-f0-9-]+)\.cursorpack/)
+  if (uuidMatch) {
+    const uuid = uuidMatch[1]
+    const arrowPath = join(ROOT, 'previews', uuid, 'Arrow.png')
+    if (existsSync(arrowPath)) {
+      out.preview_base_url = entry.download_url.replace(`/themes/${uuid}.cursorpack`, `/previews/${uuid}`)
+    }
+  }
   return out
 }
 
