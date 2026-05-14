@@ -16,12 +16,13 @@
  *  7. マルウェアチェック (VirusTotal API / ローカル DB)
  *  8. 孤立検出: themes/*.cursorpack に対応する entries/*.json が無い場合は error
  */
-import { readFileSync, statSync, existsSync, readdirSync } from 'node:fs'
+import { readFileSync, statSync, existsSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs'
 import { createHash, createPublicKey, verify } from 'node:crypto'
 import { dirname, join, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Ajv from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
+import AdmZip from 'adm-zip'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..', '..')
@@ -258,6 +259,29 @@ function checkMalwareLocal(sha) {
   return { ok: true }
 }
 
+/**
+ * .cursorpack から previews/<role>.png を取り出して outRoot/previews/<uuid>/ に配置する。
+ * @param {string} packPath - ローカルの .cursorpack ファイルパス
+ * @param {string} uuid - テーマ UUID (= entry.id)
+ * @param {string} outRoot - リポジトリルート (previews/ の親)
+ * @returns {number} 抽出したファイル数
+ */
+function extractPreviews(packPath, uuid, outRoot) {
+  const zip = new AdmZip(packPath)
+  const previewDir = join(outRoot, 'previews', uuid)
+  mkdirSync(previewDir, { recursive: true })
+  let extracted = 0
+  for (const entry of zip.getEntries()) {
+    const name = entry.entryName // e.g. "previews/Arrow.png"
+    if (!name.startsWith('previews/') || name === 'previews/') continue
+    const role = name.slice('previews/'.length) // "Arrow.png"
+    if (!/^[A-Za-z0-9_]+\.png$/.test(role)) continue
+    zip.extractEntryTo(entry, previewDir, false, true)
+    extracted++
+  }
+  return extracted
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -354,6 +378,16 @@ async function main() {
       errors++
       continue
     }
+
+    // 7. プレビュー PNG 抽出 (.cursorpack 内の previews/*.png → previews/<uuid>/)
+    const packPath = join(THEMES_DIR, `${entry.id}.cursorpack`)
+    const previewCount = extractPreviews(packPath, entry.id, ROOT)
+    if (previewCount === 0) {
+      logErr(`${entry.id}: .cursorpack 内にプレビューが見つかりません — Arrow.png は必須です`)
+      errors++
+      continue
+    }
+    console.log(`  previews: ${previewCount} ファイル抽出済み`)
 
     const vtLabel = vtApiKey ? ' [VT✓]' : ''
     const nameLabel = typeof entry.name === 'string' ? entry.name : (entry.name?.en ?? entry.name?.ja ?? '?')
