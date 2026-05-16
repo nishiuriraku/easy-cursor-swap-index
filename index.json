@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "commit": "c1a27231b47e583c0a860162372b5129ff073dc8",
-  "generated_at": "2026-05-15T07:09:01.343Z",
+  "commit": "1573564e378ae43e2c6ade5cc384dee2c2f01635",
+  "generated_at": "2026-05-16T14:12:55.948Z",
   "entries": [
     {
       "id": "6d364941-c605-4def-801a-14ebb401936f",
@@ -32,7 +32,9 @@
         "Pin",
         "Person"
       ],
-      "tags": ["minimal"],
+      "tags": [
+        "minimal"
+      ],
       "download_count": 0,
       "description": "Derived from the app icon. Mint gradient + dark outline. The reference theme applied by default.",
       "size_bytes": 694793,
