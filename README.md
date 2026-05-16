@@ -60,11 +60,3 @@
 メタデータと検証スクリプトは [MIT License](./LICENSE) です。
 **個別の `.cursorpack` の利用条件は各テーマ作者に従ってください**
 (著者ごとに `authors/<github>.json` の `display_name` と PR 内の記載を参照)。
-
-## クラッシュレポート受付
-
-EasyCursorSwap のクラッシュレポート (オプトイン) は本リポジトリの
-Issues に転送されます。Cloudflare Worker (
-[crash-report-worker](https://github.com/nishiuriraku/easy-cursor-swap/tree/main/services/crash-report-worker)
-) が匿名 POST を受けて Issue 作成を行う仕組みで、ユーザーの個人情報は
-クライアント側で `redact_path` 済みです。
