@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "commit": "1573564e378ae43e2c6ade5cc384dee2c2f01635",
-  "generated_at": "2026-05-16T14:12:55.948Z",
+  "commit": "bfd5ff94135052ab0e27b90aca9aabb717b0cce5",
+  "generated_at": "2026-05-16T14:19:10.499Z",
   "entries": [
     {
       "id": "6d364941-c605-4def-801a-14ebb401936f",
@@ -42,6 +42,39 @@
       "verified": true,
       "published_at": "2026-05-14T04:36:10Z",
       "preview_base_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/previews/6d364941-c605-4def-801a-14ebb401936f"
+    },
+    {
+      "id": "ae3380ae-0c7c-4e2e-bcd6-9b1621528c8f",
+      "name": "EasyCursorSwap Neon Wire",
+      "author": "nishiuriraku",
+      "author_github": "nishiuriraku",
+      "author_pubkey_id": "da6d0d6a02195db0",
+      "sha256": "3e3e910d87f3596fafae93a77d7f8e4e69b6b3225cbdf6c7c5813d9caedec9f7",
+      "signature": "5QiBYSz3hPHpO5zO6le0ub2oVodSC/5ul4tFsRzHmUmgMH5wDbIqfLAr135F0N2/YxKkGMSMDTX3w3gSWIfbBQ==",
+      "download_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/themes/ae3380ae-0c7c-4e2e-bcd6-9b1621528c8f.cursorpack",
+      "version": "1.0.0",
+      "included_roles": [
+        "SizeNS",
+        "SizeWE",
+        "Pin",
+        "Hand",
+        "Person",
+        "SizeNWSE",
+        "Arrow",
+        "UpArrow",
+        "Crosshair",
+        "SizeAll",
+        "NWPen",
+        "Help",
+        "IBeam",
+        "Wait",
+        "No",
+        "SizeNESW",
+        "AppStarting"
+      ],
+      "tags": [],
+      "download_count": 0,
+      "preview_base_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/previews/ae3380ae-0c7c-4e2e-bcd6-9b1621528c8f"
     },
     {
       "id": "c0c16bb5-bf65-47a1-a417-068661fe6f0a",
