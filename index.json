@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "commit": "f64ada2955b5ce673dc0cb3ddb546d7349e978c5",
-  "generated_at": "2026-05-16T14:19:37.770Z",
+  "commit": "135d726d6d4970acbb0b989cf553ee37726ebefc",
+  "generated_at": "2026-05-16T14:19:59.132Z",
   "entries": [
     {
       "id": "6d364941-c605-4def-801a-14ebb401936f",
@@ -174,6 +174,39 @@
       "tags": [],
       "download_count": 0,
       "preview_base_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/previews/d02c4e77-0324-41e4-8cfb-9e92ef6471eb"
+    },
+    {
+      "id": "e44f8d62-4a60-4c0b-a0c6-87681b477662",
+      "name": "EasyCursorSwap Coral Sunset",
+      "author": "nishiuriraku",
+      "author_github": "nishiuriraku",
+      "author_pubkey_id": "da6d0d6a02195db0",
+      "sha256": "346601d024f401a5c5c8de8abaf04b1e1917f9d60680514452e9633fdbc82455",
+      "signature": "DNdIe87sTAN9zWY+Fbkqbmh+1l9QA5+tFlTmeNdD3GTAC8f9PDM06Daw4naxvUq0I8jompWzkvSTr54J6y20Aw==",
+      "download_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/themes/e44f8d62-4a60-4c0b-a0c6-87681b477662.cursorpack",
+      "version": "1.0.0",
+      "included_roles": [
+        "Pin",
+        "Person",
+        "SizeAll",
+        "SizeNWSE",
+        "Hand",
+        "SizeWE",
+        "Wait",
+        "Help",
+        "Arrow",
+        "SizeNS",
+        "SizeNESW",
+        "AppStarting",
+        "UpArrow",
+        "NWPen",
+        "Crosshair",
+        "No",
+        "IBeam"
+      ],
+      "tags": [],
+      "download_count": 0,
+      "preview_base_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/previews/e44f8d62-4a60-4c0b-a0c6-87681b477662"
     }
   ]
 }
