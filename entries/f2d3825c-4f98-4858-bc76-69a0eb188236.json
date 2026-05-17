@@ -1,0 +1,34 @@
+{
+  "author": "nishiuriraku",
+  "author_github": "nishiuriraku",
+  "author_pubkey_id": "da6d0d6a02195db0",
+  "download_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/themes/f2d3825c-4f98-4858-bc76-69a0eb188236.cursorpack",
+  "id": "f2d3825c-4f98-4858-bc76-69a0eb188236",
+  "included_roles": [
+    "Hand",
+    "IBeam",
+    "NWPen",
+    "SizeNWSE",
+    "Wait",
+    "Help",
+    "No",
+    "Arrow",
+    "Pin",
+    "SizeNESW",
+    "SizeWE",
+    "UpArrow",
+    "Person",
+    "Crosshair",
+    "AppStarting",
+    "SizeNS",
+    "SizeAll"
+  ],
+  "name": "Hamuchi Mouse Cursor",
+  "preview_base_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/previews/f2d3825c-4f98-4858-bc76-69a0eb188236",
+  "sha256": "ee12d67860c436c58dd76e418f52462e831273f4fe6c802cd6321ab4f103179c",
+  "signature": "+ABPd2jaOoHhCs0SMdcgEy5bx3Y88OxcbI3Z89+Q/0vX5XwmL0mcHM0uDx1/vdT5ad6TVVt7sdT754SZ4ladCA==",
+  "tags": [
+    "pixel"
+  ],
+  "version": "1.0.0"
+}
