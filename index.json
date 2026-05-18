@@ -1,11 +1,14 @@
 {
   "schema_version": 1,
-  "commit": "5e7432a217c92e123b6ec1b73c34785e58ce5293",
-  "generated_at": "2026-05-17T03:57:30.084Z",
+  "commit": "434283e92464ecd74dc8c470e7290a8f3a7d442a",
+  "generated_at": "2026-05-18T10:21:42.016Z",
   "entries": [
     {
       "id": "6d364941-c605-4def-801a-14ebb401936f",
-      "name": "EasyCursorSwap Mint",
+      "name": {
+        "ja": "EasyCursorSwap Mint",
+        "en": "EasyCursorSwap Mint"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
@@ -36,7 +39,10 @@
         "minimal"
       ],
       "download_count": 0,
-      "description": "Derived from the app icon. Mint gradient + dark outline. The reference theme applied by default.",
+      "description": {
+        "ja": "アプリアイコン直系。ミントグラデ + ダークアウトライン。デフォルトで適用される基準テーマ。",
+        "en": "Derived from the app icon. Mint gradient + dark outline. The reference theme applied by default."
+      },
       "size_bytes": 694793,
       "highlight": "new",
       "verified": true,
@@ -45,7 +51,10 @@
     },
     {
       "id": "ae3380ae-0c7c-4e2e-bcd6-9b1621528c8f",
-      "name": "EasyCursorSwap Neon Wire",
+      "name": {
+        "ja": "EasyCursorSwap Neon Wire",
+        "en": "EasyCursorSwap Neon Wire"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
@@ -78,7 +87,10 @@
     },
     {
       "id": "c0c16bb5-bf65-47a1-a417-068661fe6f0a",
-      "name": "EasyCursorSwap Sakura",
+      "name": {
+        "ja": "EasyCursorSwap Sakura",
+        "en": "EasyCursorSwap Sakura"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
@@ -111,7 +123,10 @@
     },
     {
       "id": "ccf28a90-a370-4f0e-ae7c-baf85335869c",
-      "name": "EasyCursorSwap Violet Dusk",
+      "name": {
+        "ja": "EasyCursorSwap Violet Dusk",
+        "en": "EasyCursorSwap Violet Dusk"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
@@ -144,7 +159,10 @@
     },
     {
       "id": "d02c4e77-0324-41e4-8cfb-9e92ef6471eb",
-      "name": "EasyCursorSwap Carbon",
+      "name": {
+        "ja": "EasyCursorSwap Carbon",
+        "en": "EasyCursorSwap Carbon"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
@@ -177,7 +195,10 @@
     },
     {
       "id": "e44f8d62-4a60-4c0b-a0c6-87681b477662",
-      "name": "EasyCursorSwap Coral Sunset",
+      "name": {
+        "ja": "EasyCursorSwap Coral Sunset",
+        "en": "EasyCursorSwap Coral Sunset"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
@@ -210,7 +231,10 @@
     },
     {
       "id": "f2d3825c-4f98-4858-bc76-69a0eb188236",
-      "name": "Hamuchi Mouse Cursor",
+      "name": {
+        "ja": "ハムチマウスカーソル",
+        "en": "Hamuchi Mouse Cursor"
+      },
       "author": "nishiuriraku",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",

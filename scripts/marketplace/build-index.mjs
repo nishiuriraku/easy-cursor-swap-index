@@ -12,9 +12,13 @@
  *     "entries": [ ... ]
  *   }
  *
- * Rust 側の `MarketplaceEntry::name` は現状 `String` のみ受け付けるため、
- * schema が許す `{ ja, en }` オブジェクトの場合は `en > ja > id` の優先で
- * フォールバックして string 化する (Rust 側の i18n 対応までの暫定処理)。
+ * Rust 側 (`src-tauri/src/marketplace.rs`) の `MarketplaceEntry::name` は
+ * `crate::theme::LocalizedString` (`#[serde(untagged)]`) を採用しており、
+ * plain string と `{ ja, en, default, ... }` ロケールマップの両方を受け付ける。
+ * したがって本スクリプトは entry の `name` / `description` を **一切フラット化せず
+ * そのまま pass-through する**。flatten すると JA 値が削れて Marketplace カードが
+ * JA モードでも EN 名を表示するバグになる (修正コミット: easy-cursor-swap
+ * 79dcea4 fix(marketplace) を参照)。
  */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -36,24 +40,6 @@ const validateEntry = ajv.compile(loadJson(join(SCHEMAS_DIR, 'index-entry.json')
 
 function loadJson(path) {
   return JSON.parse(readFileSync(path, 'utf-8'))
-}
-
-/** Rust 側 `name: String` に合わせて i18n オブジェクトを単一文字列にフラット化する。 */
-function flattenName(name, fallback) {
-  if (typeof name === 'string') return name
-  if (name && typeof name === 'object') {
-    return name.en ?? name.ja ?? fallback
-  }
-  return fallback
-}
-
-/** description も同様にフラット化 (オプショナル)。 */
-function flattenDescription(desc) {
-  if (typeof desc === 'string') return desc
-  if (desc && typeof desc === 'object') {
-    return desc.en ?? desc.ja ?? null
-  }
-  return null
 }
 
 function readEntries() {
@@ -78,10 +64,11 @@ function readEntries() {
 
 function normalizeEntry(entry) {
   // Rust 側の `MarketplaceEntry` が読める形に揃える。
-  // 不要フィールドはそのまま残しても serde は無視するため、I18N 部分だけ正規化する。
+  // name / description は LocalizedString (string | { ja, en, ... }) のまま pass-through。
+  // 余分なフィールドはそのまま残しても serde 側は無視する。
   const out = {
     id: entry.id,
-    name: flattenName(entry.name, entry.id),
+    name: entry.name,
     author: entry.author,
     author_github: entry.author_github,
     author_pubkey_id: entry.author_pubkey_id,
@@ -93,8 +80,7 @@ function normalizeEntry(entry) {
     tags: entry.tags ?? [],
     download_count: entry.download_count ?? 0,
   }
-  const description = flattenDescription(entry.description)
-  if (description != null) out.description = description
+  if (entry.description != null) out.description = entry.description
   if (entry.homepage) out.homepage = entry.homepage
   if (entry.size_bytes != null) out.size_bytes = entry.size_bytes
   if (entry.highlight) out.highlight = entry.highlight
