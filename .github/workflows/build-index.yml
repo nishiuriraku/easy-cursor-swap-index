@@ -1,7 +1,7 @@
 name: Rebuild index.json
 
 # main への push 時に entries/*.json を集約して index.json を再生成する。
-# クライアント (cursor-forge marketplace.rs) は raw.githubusercontent.com の
+# クライアント (easy-cursor-swap marketplace.rs) は raw.githubusercontent.com の
 # index.json 1 ファイルだけを取得するため、entry の追加・削除と index.json を
 # 必ず同期させる必要がある。
 

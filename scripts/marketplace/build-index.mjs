@@ -2,7 +2,7 @@
 /**
  * `entries/*.json` を走査して `index.json` を再生成するスクリプト。
  *
- * 出力フォーマットは cursor-forge の `src-tauri/src/marketplace.rs::MarketplaceIndex`
+ * 出力フォーマットは easy-cursor-swap の `src-tauri/src/marketplace.rs::MarketplaceIndex`
  * に合わせる:
  *
  *   {
@@ -20,46 +20,48 @@
  * JA モードでも EN 名を表示するバグになる (修正コミット: easy-cursor-swap
  * 79dcea4 fix(marketplace) を参照)。
  */
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import Ajv from 'ajv/dist/2020.js'
-import addFormats from 'ajv-formats'
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import Ajv from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const ROOT = join(__dirname, '..', '..')
-const ENTRIES_DIR = join(ROOT, 'entries')
-const SCHEMAS_DIR = join(ROOT, 'schemas')
-const OUT_PATH = join(ROOT, 'index.json')
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..', '..');
+const ENTRIES_DIR = join(ROOT, 'entries');
+const SCHEMAS_DIR = join(ROOT, 'schemas');
+const OUT_PATH = join(ROOT, 'index.json');
 
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 1;
 
-const ajv = new Ajv({ allErrors: true, strict: false })
-addFormats(ajv)
-const validateEntry = ajv.compile(loadJson(join(SCHEMAS_DIR, 'index-entry.json')))
+const ajv = new Ajv({ allErrors: true, strict: false });
+addFormats(ajv);
+const validateEntry = ajv.compile(
+  loadJson(join(SCHEMAS_DIR, 'index-entry.json'))
+);
 
 function loadJson(path) {
-  return JSON.parse(readFileSync(path, 'utf-8'))
+  return JSON.parse(readFileSync(path, 'utf-8'));
 }
 
 function readEntries() {
-  if (!existsSync(ENTRIES_DIR)) return []
+  if (!existsSync(ENTRIES_DIR)) return [];
   const files = readdirSync(ENTRIES_DIR)
     .filter((f) => f.endsWith('.json'))
-    .sort()
-  const entries = []
+    .sort();
+  const entries = [];
   for (const f of files) {
-    const path = join(ENTRIES_DIR, f)
-    const entry = loadJson(path)
+    const path = join(ENTRIES_DIR, f);
+    const entry = loadJson(path);
     if (!validateEntry(entry)) {
       const errs = (validateEntry.errors ?? [])
         .map((e) => `${e.instancePath || '/'} ${e.message}`)
-        .join('; ')
-      throw new Error(`${f}: schema 違反 — ${errs}`)
+        .join('; ');
+      throw new Error(`${f}: schema 違反 — ${errs}`);
     }
-    entries.push(normalizeEntry(entry))
+    entries.push(normalizeEntry(entry));
   }
-  return entries
+  return entries;
 }
 
 function normalizeEntry(entry) {
@@ -79,23 +81,28 @@ function normalizeEntry(entry) {
     included_roles: entry.included_roles,
     tags: entry.tags ?? [],
     download_count: entry.download_count ?? 0,
-  }
-  if (entry.description != null) out.description = entry.description
-  if (entry.homepage) out.homepage = entry.homepage
-  if (entry.size_bytes != null) out.size_bytes = entry.size_bytes
-  if (entry.highlight) out.highlight = entry.highlight
-  if (entry.verified != null) out.verified = entry.verified
-  if (entry.published_at) out.published_at = entry.published_at
+  };
+  if (entry.description != null) out.description = entry.description;
+  if (entry.homepage) out.homepage = entry.homepage;
+  if (entry.size_bytes != null) out.size_bytes = entry.size_bytes;
+  if (entry.highlight) out.highlight = entry.highlight;
+  if (entry.verified != null) out.verified = entry.verified;
+  if (entry.published_at) out.published_at = entry.published_at;
   // preview_base_url: previews/<uuid>/Arrow.png が存在すれば自動導出する
-  const uuidMatch = entry.download_url?.match(/\/themes\/([a-f0-9-]+)\.cursorpack/)
+  const uuidMatch = entry.download_url?.match(
+    /\/themes\/([a-f0-9-]+)\.cursorpack/
+  );
   if (uuidMatch) {
-    const uuid = uuidMatch[1]
-    const arrowPath = join(ROOT, 'previews', uuid, 'Arrow.png')
+    const uuid = uuidMatch[1];
+    const arrowPath = join(ROOT, 'previews', uuid, 'Arrow.png');
     if (existsSync(arrowPath)) {
-      out.preview_base_url = entry.download_url.replace(`/themes/${uuid}.cursorpack`, `/previews/${uuid}`)
+      out.preview_base_url = entry.download_url.replace(
+        `/themes/${uuid}.cursorpack`,
+        `/previews/${uuid}`
+      );
     }
   }
-  return out
+  return out;
 }
 
 /**
@@ -107,44 +114,44 @@ function normalizeEntry(entry) {
  * 静的コマンドであっても security hook に引っかかるため。
  */
 function detectCommit() {
-  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
   try {
-    const headPath = join(ROOT, '.git', 'HEAD')
-    if (!existsSync(headPath)) return null
-    const head = readFileSync(headPath, 'utf-8').trim()
+    const headPath = join(ROOT, '.git', 'HEAD');
+    if (!existsSync(headPath)) return null;
+    const head = readFileSync(headPath, 'utf-8').trim();
     if (head.startsWith('ref: ')) {
-      const refPath = join(ROOT, '.git', head.slice(5).trim())
+      const refPath = join(ROOT, '.git', head.slice(5).trim());
       if (existsSync(refPath)) {
-        return readFileSync(refPath, 'utf-8').trim()
+        return readFileSync(refPath, 'utf-8').trim();
       }
       // packed-refs フォールバック
-      const packed = join(ROOT, '.git', 'packed-refs')
+      const packed = join(ROOT, '.git', 'packed-refs');
       if (existsSync(packed)) {
-        const ref = head.slice(5).trim()
+        const ref = head.slice(5).trim();
         const line = readFileSync(packed, 'utf-8')
           .split('\n')
-          .find((l) => l.endsWith(` ${ref}`))
-        if (line) return line.split(' ')[0]
+          .find((l) => l.endsWith(` ${ref}`));
+        if (line) return line.split(' ')[0];
       }
-      return null
+      return null;
     }
-    return head
+    return head;
   } catch {
-    return null
+    return null;
   }
 }
 
 function main() {
-  const entries = readEntries()
+  const entries = readEntries();
   const index = {
     schema_version: SCHEMA_VERSION,
     commit: detectCommit(),
     generated_at: new Date().toISOString(),
     entries,
-  }
-  const json = `${JSON.stringify(index, null, 2)}\n`
-  writeFileSync(OUT_PATH, json, 'utf-8')
-  console.log(`wrote ${OUT_PATH} (${entries.length} entries)`)
+  };
+  const json = `${JSON.stringify(index, null, 2)}\n`;
+  writeFileSync(OUT_PATH, json, 'utf-8');
+  console.log(`wrote ${OUT_PATH} (${entries.length} entries)`);
 }
 
-main()
+main();
