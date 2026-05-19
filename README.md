@@ -11,7 +11,9 @@
 ├── authors/                 公開鍵レジストリ (1 著者 = 1 ファイル)
 │   └── <github>.json        { github, display_name, public_key, historical_keys? }
 ├── entries/                 テーマメタデータ (1 テーマ = 1 ファイル)
-│   └── <uuid>.json          { id, name, author_github, sha256, signature, ... }
+│   └── <uuid>.json          { id, name, author, author_github, sha256, signature, ... }
+│                            ※ `author` = theme.json の作者クレジット (表示用)
+│                            ※ `author_github` = 提出者 GitHub username (鍵紐付け用)
 ├── themes/                  実体 .cursorpack (uuid.cursorpack)
 ├── previews/                カーソルロール別プレビュー PNG (validate.mjs が自動生成)
 │   └── <uuid>/

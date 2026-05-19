@@ -260,6 +260,57 @@ function checkMalwareLocal(sha) {
 }
 
 /**
+ * .cursorpack 内の `theme.json` を読み出して JSON オブジェクトを返す。
+ * `theme.json` が存在しない / パース不能なら null を返す (上位はゆるく扱う)。
+ * @param {string} packPath
+ * @returns {Record<string, unknown> | null}
+ */
+function loadCursorpackTheme(packPath) {
+  try {
+    const zip = new AdmZip(packPath)
+    const entry = zip.getEntry('theme.json')
+    if (!entry) return null
+    return JSON.parse(entry.getData().toString('utf-8'))
+  } catch {
+    return null
+  }
+}
+
+/**
+ * `entry.author` が `.cursorpack` 内 `theme.json.author` と一致するかを検査する。
+ *
+ * 旧バグ (自動提出フローが `author` フィールドに提出者 GitHub username を入れていた)
+ * の防衛線として CI で drift を検出する。`theme.json` 側 author が未設定の場合は
+ * フォールバックで提出者 GitHub username が入る仕様なので、その場合のみ
+ * `entry.author === entry.author_github` を許容する。
+ *
+ * @param {Record<string, unknown>} entry - index entry JSON
+ * @param {Record<string, unknown> | null} packTheme - .cursorpack 内 theme.json (null なら無視)
+ * @returns {{ ok: true } | { ok: false, error: string }}
+ */
+function checkAuthorConsistency(entry, packTheme) {
+  if (!packTheme) return { ok: true }
+  const themeAuthor = packTheme.author
+  if (typeof themeAuthor === 'string' && themeAuthor.length > 0) {
+    if (entry.author !== themeAuthor) {
+      return {
+        ok: false,
+        error: `entry.author (${entry.author}) が .cursorpack 内 theme.json author (${themeAuthor}) と一致しません — themeのauthorを採用してください`,
+      }
+    }
+    return { ok: true }
+  }
+  // theme.json に author が無い場合は entry.author が author_github と一致する想定
+  if (entry.author !== entry.author_github) {
+    return {
+      ok: false,
+      error: `entry.author (${entry.author}) は theme.json に author が無いため author_github (${entry.author_github}) と一致する必要があります`,
+    }
+  }
+  return { ok: true }
+}
+
+/**
  * .cursorpack から previews/<role>.png を取り出して outRoot/previews/<uuid>/ に配置する。
  * @param {string} packPath - ローカルの .cursorpack ファイルパス
  * @param {string} uuid - テーマ UUID (= entry.id)
@@ -379,8 +430,19 @@ async function main() {
       continue
     }
 
-    // 7. プレビュー PNG 抽出 (.cursorpack 内の previews/*.png → previews/<uuid>/)
+    // 7. .cursorpack 内 theme.json と entry の author 一致チェック
+    //    自動提出フローが `entry.author` を提出者 GitHub username で上書きしないことを
+    //    CI 側でも担保する (cursor-forge 側で同一不変条件を強制しているが、二重に守る)。
     const packPath = join(THEMES_DIR, `${entry.id}.cursorpack`)
+    const packTheme = loadCursorpackTheme(packPath)
+    const authorCheck = checkAuthorConsistency(entry, packTheme)
+    if (!authorCheck.ok) {
+      logErr(`${file}: ${authorCheck.error}`)
+      errors++
+      continue
+    }
+
+    // 8. プレビュー PNG 抽出 (.cursorpack 内の previews/*.png → previews/<uuid>/)
     const previewCount = extractPreviews(packPath, entry.id, ROOT)
     if (previewCount === 0) {
       logErr(`${entry.id}: .cursorpack 内にプレビューが見つかりません — Arrow.png は必須です`)

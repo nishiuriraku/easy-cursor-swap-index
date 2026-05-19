@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "commit": "de264ad1e53076c7564edb6b3ba7974ac87e1570",
-  "generated_at": "2026-05-18T10:29:25.422Z",
+  "commit": "eac9d2613fb011beff78bd09c90a50385c79d0e2",
+  "generated_at": "2026-05-19T12:14:57.705Z",
   "entries": [
     {
       "id": "6d364941-c605-4def-801a-14ebb401936f",
@@ -235,7 +235,7 @@
         "ja": "ハムチマウスカーソル",
         "en": "Hamuchi Mouse Cursor"
       },
-      "author": "nishiuriraku",
+      "author": "無ナ",
       "author_github": "nishiuriraku",
       "author_pubkey_id": "da6d0d6a02195db0",
       "sha256": "ee12d67860c436c58dd76e418f52462e831273f4fe6c802cd6321ab4f103179c",
