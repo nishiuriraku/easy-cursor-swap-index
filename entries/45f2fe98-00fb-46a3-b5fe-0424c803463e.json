@@ -1,0 +1,37 @@
+{
+  "author": "nishiuriraku",
+  "author_github": "nishiuriraku",
+  "author_pubkey_id": "da6d0d6a02195db0",
+  "download_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/themes/45f2fe98-00fb-46a3-b5fe-0424c803463e.cursorpack",
+  "id": "45f2fe98-00fb-46a3-b5fe-0424c803463e",
+  "included_roles": [
+    "SizeNESW",
+    "Person",
+    "IBeam",
+    "SizeWE",
+    "UpArrow",
+    "SizeAll",
+    "Hand",
+    "NWPen",
+    "SizeNS",
+    "Arrow",
+    "No",
+    "SizeNWSE",
+    "Help",
+    "AppStarting",
+    "Crosshair",
+    "Pin",
+    "Wait"
+  ],
+  "name": {
+    "en": "EasyCursorSwap Terminal Green",
+    "ja": "EasyCursorSwap Terminal Green"
+  },
+  "preview_base_url": "https://raw.githubusercontent.com/nishiuriraku/easy-cursor-swap-index/main/previews/45f2fe98-00fb-46a3-b5fe-0424c803463e",
+  "sha256": "f9e2c03d8cf4e7dacb5d4571bbb4026db94544a10932cb0647c6892843f1c647",
+  "signature": "VXNBzyDj+oTdIPh3rbfOhwYrjei1zfgnJti4svAmXIhbY/sJFTPDH2E/SSw3Xt0OkH7GMMVaqzn4cfw95NfVDg==",
+  "tags": [
+    "minimal"
+  ],
+  "version": "1.0.0"
+}
